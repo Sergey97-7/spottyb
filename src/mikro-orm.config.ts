@@ -16,3 +16,4 @@ export default {
   password: "",
 } as Parameters<typeof MikroORM.init>[0];
 
+//redis 6379

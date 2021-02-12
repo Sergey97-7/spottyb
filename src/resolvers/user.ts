@@ -40,10 +40,20 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() { req, em }: MyContext) {
+    const { userId } = req.session;
+    if (!userId) {
+      return null;
+    }
+    const user: User | null = await em.findOne(User, { id: userId });
+    return user;
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const { username, password } = options;
     if (username.length <= 3) {
@@ -56,28 +66,32 @@ export class UserResolver {
         errors: [{ field: "password", message: "password length less then 4" }],
       };
     }
-    const checkedUser: User | null = await em.findOne(User, { username });
-    if (checkedUser) {
-      return {
-        errors: [
-          { field: "username", message: "this username is already exists" },
-        ],
-      };
-    }
     const hashedPassword = await argon2.hash(password);
     const user = em.create(User, {
       username,
       password: hashedPassword,
     });
-    await em.persistAndFlush(user);
-   
+    try {
+      await em.persistAndFlush(user);
+    } catch (e) {
+      if (e.code === "23505") {
+        return {
+          errors: [
+            { field: "username", message: "this username is already exists" },
+          ],
+        };
+      }
+    }
+
+    req.session!.userId = user.id;
+
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg("options") options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const { username, password } = options;
     const user = await em.findOne(User, { username });
@@ -94,12 +108,7 @@ export class UserResolver {
         errors: [{ field: "password", message: "incorrect password" }],
       };
     }
-    // const hashedPassword = await argon2.hash(password);
-    // const user = em.create(User, {
-    //   username,
-    //   password: hashedPassword,
-    // });
-    // await em.persistAndFlush(user);
+    req.session!.userId = user.id;
     return { user };
   }
 }

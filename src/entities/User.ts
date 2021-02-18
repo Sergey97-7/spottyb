@@ -20,11 +20,16 @@ export class User {
   @Property({ type: "text", unique: true })
   username!: string;
 
+  @Field(() => String)
+  @Property({ type: "text", unique: true })
+  email!: string;
+
   @Property({ type: "text" })
   password!: string;
 
-  constructor(username: string, password: string) {
+  constructor(username: string, password: string, email: string) {
     this.username = username;
     this.password = password;
+    this.email = email;
   }
 }

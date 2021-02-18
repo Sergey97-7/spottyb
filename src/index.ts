@@ -1,5 +1,5 @@
 import { MikroORM } from "@mikro-orm/core";
-import { __prod__ } from "./constants";
+import { COOKIE_NAME, __prod__ } from "./constants";
 import microConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
@@ -8,11 +8,11 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
-import redis from "redis";
 import session from "express-session";
 import connectRedis from "connect-redis";
 import { MyContext } from "./types";
 import cors from "cors";
+const Redis = require("ioredis");
 
 const main = async () => {
   const orm = await MikroORM.init(microConfig);
@@ -20,8 +20,7 @@ const main = async () => {
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redisClient = redis.createClient();
-
+  const redis = new Redis();
   app.use(
     cors({
       origin: "http://localhost:3001",
@@ -30,9 +29,9 @@ const main = async () => {
   );
   app.use(
     session({
-      name: "session",
+      name: COOKIE_NAME,
       store: new RedisStore({
-        client: redisClient,
+        client: redis,
         disableTouch: true,
         disableTTL: true,
       }),
@@ -53,7 +52,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }), // разделить слои
+    context: ({ req, res }): MyContext => ({ em: orm.em, req, res, redis }), // разделить слои
   });
   apolloServer.applyMiddleware({
     app,

@@ -3,10 +3,12 @@ import {
   Arg,
   Ctx,
   Field,
+  FieldResolver,
   Mutation,
   ObjectType,
   Query,
   Resolver,
+  Root,
 } from "type-graphql";
 import argon2 from "argon2";
 import { User } from "./../entities/User";
@@ -34,8 +36,19 @@ class UserResponse {
   user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    // if current user
+    if (req.session.userId === user.id) {
+      return user.email;
+    } else {
+      // if alien email
+      return "";
+    }
+  }
+
   @Mutation(() => UserResponse)
   async changePassword(
     @Arg("token") token: string,
@@ -118,7 +131,11 @@ export class UserResolver {
     let user;
     const hashedPassword = await argon2.hash(password);
     try {
-     const result = await User.create({ username, email, password: hashedPassword }).save();
+      const result = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+      }).save();
       user = result;
     } catch (e) {
       console.log("err", e);

@@ -14,6 +14,7 @@ import cors from "cors";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
 import { User } from "./entities/User";
+import { Updoot } from "./entities/Updoot";
 
 const Redis = require("ioredis");
 
@@ -25,9 +26,9 @@ const main = async () => {
     password: "",
     logging: true,
     synchronize: true,
-    entities: [Post, User],
+    entities: [Post, User, Updoot],
   });
-  conn.catch((e)=> console.log('e',e))
+  conn.catch((e) => console.log("e", e));
   const app = express();
   const RedisStore = connectRedis(session);
   //redis 6379

@@ -1,4 +1,5 @@
 import "reflect-metadata";
+require("dotenv").config();
 import { COOKIE_NAME, __prod__ } from "./constants";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
@@ -23,7 +24,7 @@ const main = async () => {
     type: "postgres",
     database: "spotty",
     username: "postgres",
-    password: "",
+    password: process.env.POSTGRESQL_PASS,
     logging: true,
     synchronize: true,
     entities: [Post, User, Updoot],

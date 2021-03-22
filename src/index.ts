@@ -1,5 +1,5 @@
 import "reflect-metadata";
-require("dotenv").config();
+import "dotenv-safe/config";
 import { COOKIE_NAME, __prod__ } from "./constants";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
@@ -7,7 +7,6 @@ import { buildSchema } from "type-graphql";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-
 import session from "express-session";
 import connectRedis from "connect-redis";
 import { MyContext } from "./types";
@@ -24,21 +23,23 @@ const Redis = require("ioredis");
 const main = async () => {
   const conn = createConnection({
     type: "postgres",
-    database: "spotty",
-    username: "postgres",
-    password: process.env.POSTGRESQL_PASS,
+    // database: "spotty",
+    // username: "postgres",
+    // password: process.env.POSTGRESQL_PASS,
+    url: process.env.POSTGRESQL_URL,
     logging: true,
-    synchronize: true,
+    // synchronize: true,
     entities: [Post, User, Updoot],
   });
   conn.catch((e) => console.log("e", e));
   const app = express();
   const RedisStore = connectRedis(session);
   //redis 6379
-  const redis = new Redis();
+  const redis = new Redis(process.env.REDIS_URL);
+  app.set("trust proxy", 1);
   app.use(
     cors({
-      origin: "http://localhost:3001",
+      origin: process.env.CORS_ORIGIN,
       credentials: true,
     })
   );
@@ -55,8 +56,9 @@ const main = async () => {
         httpOnly: true,
         sameSite: "lax", //csrf
         secure: __prod__, //https
+        domain: __prod__ ? ".domain.com" : undefined,
       },
-      secret: "random string",
+      secret: process.env.SESSION_SECRET || "default string",
       resave: true,
       saveUninitialized: false,
     })
@@ -80,8 +82,8 @@ const main = async () => {
     cors: false,
   });
 
-  app.listen(3000, () => {
-    console.log("listening a 3000");
+  app.listen(process.env.PORT, () => {
+    console.log(`listening a ${process.env.PORT}`);
   });
 };
 

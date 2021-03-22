@@ -110,26 +110,6 @@ export class PostResolver {
         );
       });
     }
-    // Updoot.insert({
-    //   userId,
-    //   postId,
-    //   value: realValue,
-    // });
-    // await getConnection().query(
-    //   `
-    //   start transaction;
-
-    //   insert into updoot("userId", "postId", value)
-    //   values (${userId}, ${postId}, ${realValue});
-
-    //   update post
-    //   set points = points + ${realValue}
-    //   where id = ${postId};
-
-    //   commit;
-    // `
-    //   // [userId, postId, realValue, realValue, postId]
-    // );
     return true;
   }
   @Query(() => PaginatedPosts)

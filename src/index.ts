@@ -23,19 +23,17 @@ const Redis = require("ioredis");
 const main = async () => {
   const conn = createConnection({
     type: "postgres",
-    // database: "spotty",
-    // username: "postgres",
-    // password: process.env.POSTGRESQL_PASS,
     url: process.env.POSTGRESQL_URL,
     logging: true,
-    // synchronize: true,
     entities: [Post, User, Updoot],
   });
   conn.catch((e) => console.log("e", e));
+
   const app = express();
+
   const RedisStore = connectRedis(session);
-  //redis 6379
   const redis = new Redis(process.env.REDIS_URL);
+
   app.set("trust proxy", 1);
   app.use(
     cors({
@@ -75,7 +73,7 @@ const main = async () => {
       redis,
       userLoader: createUserLoader(),
       updootLoader: createUpdootLoader(),
-    }), // разделить слои
+    }),
   });
   apolloServer.applyMiddleware({
     app,
